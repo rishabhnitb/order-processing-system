@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -74,10 +75,18 @@ public class OrderService {
     }
 
     @Transactional
-    public void updatePendingOrders() {
+    public int updatePendingOrders() {
         List<Order> pendingOrders = orderRepository.findByStatus(OrderStatus.PENDING);
-        pendingOrders.forEach(order -> order.setStatus(OrderStatus.PROCESSING));
+        if (pendingOrders.isEmpty()) {
+            return 0;
+        }
+
+        pendingOrders.forEach(order -> {
+            order.setStatus(OrderStatus.PROCESSING);
+            order.setUpdatedAt(LocalDateTime.now());
+        });
         orderRepository.saveAll(pendingOrders);
+        return pendingOrders.size();
     }
 
     private OrderResponse mapToOrderResponse(Order order) {
