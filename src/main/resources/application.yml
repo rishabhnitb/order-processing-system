@@ -9,9 +9,13 @@ spring:
       on-profile: dev
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://dpg-d42vssq4d50c73a6aitg-a.oregon-postgres.render.com/poc_db_postgres
+    url: jdbc:postgresql://dpg-d42vssq4d50c73a6aitg-a.oregon-postgres.render.com/poc_db_postgres?sslmode=require
     username: rishabh
-    password: CgiTRsB0zk7MYz2gAOMd30nuwXF1
+    password: CgiTRsB0zk7MYz6WJz2gAOMd30nuwXF1
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 20000
   jpa:
     hibernate:
       ddl-auto: update
@@ -22,8 +26,16 @@ spring:
         format_sql: true
   sql:
     init:
-      mode: always
-      platform: postgres
+      mode: never
+
+logging:
+  level:
+    root: DEBUG
+    org.springframework: DEBUG
+    com.order.processing.system: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.zaxxer.hikari: DEBUG
 
 # Actuator Configuration
 management:
@@ -55,9 +67,13 @@ spring:
       on-profile: prod
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: ${DB_URL:jdbc:postgresql://dpg-d42vssq4d50c73a6aitg-a.oregon-postgres.render.com/poc_db_postgres}
+    url: ${DB_URL:jdbc:postgresql://dpg-d42vssq4d50c73a6aitg-a.oregon-postgres.render.com/poc_db_postgres?sslmode=require}
     username: ${DB_USERNAME:rishabh}
-    password: ${DB_PASSWORD:CgiTRsB0zk7MYz2gAOMd30nuwXF1}
+    password: ${DB_PASSWORD:CgiTRsB0zk7MYz6WJz2gAOMd30nuwXF1}
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 20000
   jpa:
     hibernate:
       ddl-auto: update
@@ -68,14 +84,4 @@ spring:
         format_sql: true
   sql:
     init:
-      mode: always
-      platform: postgres
-
-server:
-  port: ${PORT:8080}
-
-logging:
-  level:
-    root: INFO
-    org.hibernate.SQL: INFO
-    org.hibernate.type.descriptor.sql.BasicBinder: INFO
+      mode: never
