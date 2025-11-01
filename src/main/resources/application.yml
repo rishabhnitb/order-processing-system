@@ -34,14 +34,18 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: none  # Disable Hibernate DDL auto
     show-sql: true
     properties:
       hibernate:
         format_sql: true
   sql:
     init:
-      mode: never
+      mode: always  # Enable SQL initialization
+      platform: postgresql  # Specify database platform
+      schema-locations: classpath:schema.sql  # Location of schema.sql
+      data-locations: classpath:data.sql  # Location of data.sql
+      continue-on-error: false  # Fail if there are SQL errors
 
 logging:
   level:
@@ -52,6 +56,7 @@ logging:
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     com.zaxxer.hikari: DEBUG
     com.order.processing.system.scheduler: INFO
+    org.springframework.jdbc.datasource.init: DEBUG  # Add SQL initialization logging
 
 # Actuator Configuration
 management:
@@ -105,11 +110,11 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: none  # Disable Hibernate DDL auto in production
     show-sql: false
     properties:
       hibernate:
         format_sql: true
   sql:
     init:
-      mode: never
+      mode: never  # Disable SQL initialization in production

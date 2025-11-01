@@ -1,6 +1,6 @@
 package com.order.processing.system.controller;
 
-import com.order.processing.system.dto.OrderItemRequest;
+import com.order.processing.system.dto.CreateOrderRequest;
 import com.order.processing.system.dto.OrderResponse;
 import com.order.processing.system.model.OrderStatus;
 import com.order.processing.system.service.OrderService;
@@ -24,8 +24,8 @@ public class OrderController {
 
     @PostMapping
     @Operation(summary = "Create a new order")
-    public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody List<OrderItemRequest> orderItems) {
-        return ResponseEntity.ok(orderService.createOrder(orderItems));
+    public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request) {
+        return ResponseEntity.ok(orderService.createOrder(request));
     }
 
     @GetMapping("/{id}")

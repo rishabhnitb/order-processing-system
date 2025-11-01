@@ -13,6 +13,7 @@ public class OrderResponse {
     private OrderStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private CustomerDTO customer;
     private List<OrderItemDTO> items;
     private double totalAmount;
 
@@ -23,5 +24,12 @@ public class OrderResponse {
         private Double itemPrice;
         private Integer quantity;
         private Double subtotal;
+    }
+
+    @Data
+    public static class CustomerDTO {
+        private Long id;
+        private String name;
+        private String email;
     }
 }

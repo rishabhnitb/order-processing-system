@@ -1,11 +1,9 @@
 package com.order.processing.system.service;
 
-import com.order.processing.system.dto.OrderItemRequest;
+import com.order.processing.system.dto.CreateOrderRequest;
 import com.order.processing.system.dto.OrderResponse;
-import com.order.processing.system.model.Item;
-import com.order.processing.system.model.Order;
-import com.order.processing.system.model.OrderItem;
-import com.order.processing.system.model.OrderStatus;
+import com.order.processing.system.model.*;
+import com.order.processing.system.repository.CustomerRepository;
 import com.order.processing.system.repository.ItemRepository;
 import com.order.processing.system.repository.OrderRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -16,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,12 +21,17 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ItemRepository itemRepository;
+    private final CustomerRepository customerRepository;
 
     @Transactional
-    public OrderResponse createOrder(List<OrderItemRequest> orderItems) {
-        Order order = new Order();
+    public OrderResponse createOrder(CreateOrderRequest request) {
+        Customer customer = customerRepository.findById(request.getCustomerId())
+            .orElseThrow(() -> new EntityNotFoundException("Customer not found with id: " + request.getCustomerId()));
 
-        for (OrderItemRequest itemRequest : orderItems) {
+        Order order = new Order();
+        order.setCustomer(customer);
+
+        for (var itemRequest : request.getItems()) {
             Item item = itemRepository.findById(itemRequest.getItemId())
                 .orElseThrow(() -> new EntityNotFoundException("Item not found with id: " + itemRequest.getItemId()));
 
@@ -58,7 +60,7 @@ public class OrderService {
 
         return orders.stream()
             .map(this::mapToOrderResponse)
-            .collect(Collectors.toList());
+            .toList();
     }
 
     @Transactional
@@ -96,9 +98,16 @@ public class OrderService {
         response.setCreatedAt(order.getCreatedAt());
         response.setUpdatedAt(order.getUpdatedAt());
 
+        // Map customer details
+        OrderResponse.CustomerDTO customerDTO = new OrderResponse.CustomerDTO();
+        customerDTO.setId(order.getCustomer().getId());
+        customerDTO.setName(order.getCustomer().getName());
+        customerDTO.setEmail(order.getCustomer().getEmail());
+        response.setCustomer(customerDTO);
+
         List<OrderResponse.OrderItemDTO> itemDTOs = order.getItems().stream()
             .map(this::mapToOrderItemDTO)
-            .collect(Collectors.toList());
+            .toList();
 
         response.setItems(itemDTOs);
         response.setTotalAmount(itemDTOs.stream()
