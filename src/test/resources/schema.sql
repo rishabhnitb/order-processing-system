@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS items (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    price DOUBLE NOT NULL,
+    description VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS orders (
+    id UUID PRIMARY KEY,
+    status VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS order_items (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_id UUID NOT NULL,
+    item_id BIGINT NOT NULL,
+    quantity INTEGER NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(id),
+    FOREIGN KEY (item_id) REFERENCES items(id)
+);
