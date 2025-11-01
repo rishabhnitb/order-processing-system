@@ -10,7 +10,7 @@ A robust Spring Boot microservice for managing e-commerce orders with automated 
                                  │
                           ┌─────────────┐
                           │  Scheduler  │
-                          └─────────────┘
+                          └──��────────��─┘
 ```
 
 ## 🚀 Tech Stack
@@ -95,7 +95,70 @@ graph TD
    order-processing-system
    ```
 
+## 📊 Database Schema
+
+### Tables Structure
+
+#### 1. Customers
+```sql
+CREATE TABLE customers (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    phone VARCHAR(50),
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### 2. Items
+```sql
+CREATE TABLE items (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    price DOUBLE PRECISION NOT NULL,
+    description VARCHAR(255)
+);
+```
+
+#### 3. Orders
+```sql
+CREATE TABLE orders (
+    id UUID PRIMARY KEY,
+    customer_id INTEGER NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES customers(id)
+);
+```
+
+#### 4. OrderItems
+```sql
+CREATE TABLE order_items (
+    id SERIAL PRIMARY KEY,
+    order_id UUID NOT NULL,
+    item_id INTEGER NOT NULL,
+    quantity INTEGER NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(id),
+    FOREIGN KEY (item_id) REFERENCES items(id)
+);
+```
+
+### Entity Relationships
+```mermaid
+erDiagram
+    CUSTOMERS ||--o{ ORDERS : places
+    ORDERS ||--o{ ORDER_ITEMS : contains
+    ITEMS ||--o{ ORDER_ITEMS : included_in
+```
+
 ## 🔍 API Endpoints
+
+### Customer Management
+- GET `/api/customers` - List all customers
+- GET `/api/customers/{id}` - Get customer by ID
+- POST `/api/customers` - Create new customer
 
 ### Item Management
 
@@ -194,23 +257,30 @@ POST /api/orders
 ```
 **Request Body:**
 ```json
-[
-  {
-    "itemId": 1,
-    "quantity": 2
-  },
-  {
-    "itemId": 2,
-    "quantity": 1
-  }
-]
+{
+  "customerId": 1,
+  "items": [
+    {
+      "itemId": 1,
+      "quantity": 2
+    },
+    {
+      "itemId": 2,
+      "quantity": 1
+    }
+  ]
+}
 ```
 **Response:**
 ```json
 {
   "id": "uuid",
   "status": "PENDING",
-  "createdAt": "2023-11-01T10:00:00",
+  "customer": {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john@example.com"
+  },
   "items": [
     {
       "itemId": 1,
@@ -220,13 +290,39 @@ POST /api/orders
       "subtotal": 1399.98
     }
   ],
-  "totalAmount": 1399.98
+  "totalAmount": 1399.98,
+  "createdAt": "2025-11-02T10:00:00",
+  "updatedAt": "2025-11-02T10:00:00"
 }
 ```
 
 #### 2. Get Order Details
 ```http
 GET /api/orders/{id}
+```
+**Response:**
+```json
+{
+  "id": "uuid",
+  "status": "PENDING",
+  "customer": {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john@example.com"
+  },
+  "items": [
+    {
+      "itemId": 1,
+      "itemName": "Smartphone",
+      "itemPrice": 699.99,
+      "quantity": 2,
+      "subtotal": 1399.98
+    }
+  ],
+  "totalAmount": 1399.98,
+  "createdAt": "2025-11-02T10:00:00",
+  "updatedAt": "2025-11-02T10:00:00"
+}
 ```
 
 #### 3. List All Orders
@@ -236,9 +332,44 @@ GET /api/orders?status=PENDING
 Query Parameters:
 - `status` (optional): Filter by order status
 
+**Response:**
+```json
+[
+  {
+    "id": "uuid",
+    "status": "PENDING",
+    "customer": {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@example.com"
+    },
+    "items": [...],
+    "totalAmount": 1399.98,
+    "createdAt": "2025-11-02T10:00:00",
+    "updatedAt": "2025-11-02T10:00:00"
+  }
+]
+```
+
 #### 4. Cancel Order
 ```http
 PATCH /api/orders/{id}/cancel
+```
+**Response:**
+```json
+{
+  "id": "uuid",
+  "status": "CANCELLED",
+  "customer": {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john@example.com"
+  },
+  "items": [...],
+  "totalAmount": 1399.98,
+  "createdAt": "2025-11-02T10:00:00",
+  "updatedAt": "2025-11-02T10:00:00"
+}
 ```
 
 ### 📊 Monitoring Endpoints
@@ -263,6 +394,12 @@ PATCH /api/orders/{id}/cancel
 - `name`: Required, non-blank string
 - `price`: Required, positive number
 - `description`: Optional string
+
+### Order Request Validation
+- `customerId`: Required, must reference an existing customer
+- `items`: Required, non-empty array of order items
+- `items[].itemId`: Required, must reference an existing item
+- `items[].quantity`: Required, must be positive
 
 ## 🔄 Business Flow
 
@@ -325,6 +462,36 @@ DB_USERNAME=username
 DB_PASSWORD=password
 ```
 
+## 🗄️ Database Configuration
+
+### Development (PostgreSQL)
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://host:port/dbname
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+```
+
+### Testing (H2)
+```yaml
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password: 
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+```
+
 ## 📈 Monitoring
 
 ### Health Checks
@@ -353,10 +520,23 @@ GET /actuator/metrics
 
 ## 🧪 Testing
 
-Run tests:
+### Unit Tests
 ```bash
 mvn test
 ```
+
+The project includes comprehensive tests for:
+- OrderService
+- CustomerService
+- ItemService
+- Controllers
+- Database operations
+
+### Test Data
+Sample data is automatically loaded for testing:
+- Customers: 3 sample customers
+- Items: 5 sample products
+- Orders: Generated during tests
 
 ## 🌟 Features
 
