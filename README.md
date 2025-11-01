@@ -97,6 +97,95 @@ graph TD
 
 ## 🔍 API Endpoints
 
+### Item Management
+
+#### 1. List All Items
+```http
+GET /api/items
+```
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "name": "Smartphone",
+    "price": 699.99,
+    "description": "Latest model smartphone"
+  },
+  {
+    "id": 2,
+    "name": "Laptop",
+    "price": 1299.99,
+    "description": "High-performance laptop"
+  }
+]
+```
+
+#### 2. Get Item by ID
+```http
+GET /api/items/{id}
+```
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "Smartphone",
+  "price": 699.99,
+  "description": "Latest model smartphone"
+}
+```
+
+#### 3. Create Single Item
+```http
+POST /api/items
+```
+**Request Body:**
+```json
+{
+  "name": "Smartphone",
+  "price": 699.99,
+  "description": "Latest model smartphone"
+}
+```
+**Response:** Returns created item with status code 201
+
+#### 4. Create Multiple Items
+```http
+POST /api/items/batch
+```
+**Request Body:**
+```json
+[
+  {
+    "name": "Smartphone",
+    "price": 699.99,
+    "description": "Latest model smartphone"
+  },
+  {
+    "name": "Laptop",
+    "price": 1299.99,
+    "description": "High-performance laptop"
+  }
+]
+```
+**Response:** Returns list of created items with status code 201
+
+#### 5. Delete Item
+```http
+DELETE /api/items/{id}
+```
+**Response:** Status code 204 (No Content)
+
+#### 6. Delete Multiple Items
+```http
+DELETE /api/items/batch
+```
+**Request Body:**
+```json
+[1, 2, 3]
+```
+**Response:** Status code 204 (No Content)
+
 ### Order Management
 
 #### 1. Create Order
@@ -168,9 +257,19 @@ PATCH /api/orders/{id}/cancel
     └── GET /actuator/loggers
 ```
 
+## 📝 API Validations
+
+### Item Request Validation
+- `name`: Required, non-blank string
+- `price`: Required, positive number
+- `description`: Optional string
+
 ## 🔄 Business Flow
 
 ```ascii
+Item Management ─────┐
+                    │
+                    ▼
 Order Creation ──▶ PENDING ──┬──▶ PROCESSING ──▶ SHIPPED ──▶ DELIVERED
                             │
                             └──▶ CANCELLED
