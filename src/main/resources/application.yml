@@ -55,28 +55,29 @@ logging:
 
 # Actuator Configuration
 management:
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: ping,diskSpace
+        readiness:
+          include: db,diskSpace
   endpoints:
     web:
       exposure:
         include: health,info,metrics,prometheus,env,loggers,mappings
       base-path: /actuator
-  endpoint:
-    health:
-      show-details: always
-      probes:
-        enabled: true
-      group:
-        readiness:
-          include: db,healthCheck
-        liveness:
-          include: ping,healthCheck
-  info:
-    env:
-      enabled: true
   health:
+    diskspace:
+      enabled: true
     db:
       enabled: true
-    defaults:
+  info:
+    env:
       enabled: true
 
 # Health Check Configuration
