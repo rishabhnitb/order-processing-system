@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS customers (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     phone VARCHAR(50),
@@ -8,15 +8,15 @@ CREATE TABLE IF NOT EXISTS customers (
 );
 
 CREATE TABLE IF NOT EXISTS items (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    price DOUBLE NOT NULL,
+    price DOUBLE PRECISION NOT NULL,
     description VARCHAR(255)
 );
 
 CREATE TABLE IF NOT EXISTS orders (
     id UUID PRIMARY KEY,
-    customer_id BIGINT NOT NULL,
+    customer_id INTEGER NOT NULL,
     status VARCHAR(20) NOT NULL,
     created_at TIMESTAMP,
     updated_at TIMESTAMP,
@@ -24,9 +24,9 @@ CREATE TABLE IF NOT EXISTS orders (
 );
 
 CREATE TABLE IF NOT EXISTS order_items (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     order_id UUID NOT NULL,
-    item_id BIGINT NOT NULL,
+    item_id INTEGER NOT NULL,
     quantity INTEGER NOT NULL,
     FOREIGN KEY (order_id) REFERENCES orders(id),
     FOREIGN KEY (item_id) REFERENCES items(id)
