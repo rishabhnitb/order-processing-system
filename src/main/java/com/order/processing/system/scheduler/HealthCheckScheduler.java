@@ -20,7 +20,7 @@ public class HealthCheckScheduler {
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    @Scheduled(fixedRate = 300000) // 5 minutes
+    @Scheduled(fixedRate = 120000) // 2 minutes
     public void checkHealth() {
         log.info("Performing scheduled health check at: {}", LocalDateTime.now().format(formatter));
 
