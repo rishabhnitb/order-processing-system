@@ -153,37 +153,46 @@ erDiagram
     ITEMS ||--o{ ORDER_ITEMS : included_in
 ```
 
-## 🔒 Security Implementation
+## 🔒 Security and API Access
 
 ### CSRF Protection
-The API is secured with CSRF (Cross-Site Request Forgery) protection. For all POST, PUT, PATCH, and DELETE requests, you need to:
+The API uses CSRF (Cross-Site Request Forgery) protection for all modifying requests (POST, PUT, PATCH, DELETE). Each request requires:
+1. A CSRF token cookie (`XSRF-TOKEN`)
+2. The same token in the request header (`X-XSRF-TOKEN`)
 
-1. First get the CSRF token from the cookie (XSRF-TOKEN)
-2. Include the token in the request header (X-XSRF-TOKEN)
+### Getting Started with API Calls
 
-### Making API Calls
+#### 1. Obtain CSRF Token
+First, get a CSRF token by making any GET request:
+```bash
+# Using curl
+curl -v -c cookie.txt https://order-processing-system-x02o.onrender.com/api/orders
 
-#### GET Requests
-GET requests don't require CSRF tokens:
-```http
-GET /api/orders
+# The response will include XSRF-TOKEN in cookies and headers
 ```
 
-#### POST/PUT/PATCH/DELETE Requests
-For modifying requests, include the CSRF token:
+#### 2. Making API Requests
 
-```http
-// 1. First get the CSRF token cookie
-GET /api/any-endpoint
-// The response will include a cookie named XSRF-TOKEN
+##### GET Requests (No CSRF Required)
+```bash
+# List all orders
+curl https://order-processing-system-x02o.onrender.com/api/orders
 
-// 2. Include the token in subsequent requests
-POST /api/orders
-Headers:
-  Content-Type: application/json
-  X-XSRF-TOKEN: your-csrf-token-here
-Body:
-{
+# Get specific order
+curl https://order-processing-system-x02o.onrender.com/api/orders/{id}
+```
+
+##### POST/PUT/PATCH/DELETE Requests (CSRF Required)
+```bash
+# 1. Store token from cookie file
+TOKEN=$(cat cookie.txt | grep XSRF-TOKEN | cut -f 7)
+
+# 2. Create new order
+curl -X POST 'https://order-processing-system-x02o.onrender.com/api/orders' \
+-H "Content-Type: application/json" \
+-H "X-XSRF-TOKEN: $TOKEN" \
+-b cookie.txt \
+-d '{
   "customerId": 1,
   "items": [
     {
@@ -191,159 +200,69 @@ Body:
       "quantity": 2
     }
   ]
-}
+}'
+
+# 3. Cancel order
+curl -X PATCH 'https://order-processing-system-x02o.onrender.com/api/orders/{id}/cancel' \
+-H "X-XSRF-TOKEN: $TOKEN" \
+-b cookie.txt
 ```
 
-### Example using cURL
-```bash
-# 1. Get the CSRF token
-curl -c cookie.txt http://localhost:8080/api/orders
-
-# 2. Make a POST request with the token
-curl -X POST http://localhost:8080/api/orders \
-  -H "Content-Type: application/json" \
-  -H "X-XSRF-TOKEN: $(grep XSRF-TOKEN cookie.txt | cut -f 7)" \
-  -b cookie.txt \
-  -d '{"customerId":1,"items":[{"itemId":1,"quantity":2}]}'
-```
-
-### Example using JavaScript/Axios
+### Using with JavaScript/Axios
 ```javascript
-// Configure axios to include credentials and handle CSRF
+// Configure axios
+const axios = require('axios');
 axios.defaults.withCredentials = true;
 
-// First request will receive the CSRF token cookie
-await axios.get('/api/orders');
-
-// Subsequent requests will automatically include the CSRF token
-await axios.post('/api/orders', {
-  customerId: 1,
-  items: [{
-    itemId: 1,
-    quantity: 2
-  }]
-});
+// Function to make authenticated requests
+async function makeRequest() {
+  // 1. Get CSRF token
+  await axios.get('https://order-processing-system-x02o.onrender.com/api/orders');
+  
+  // 2. Make authenticated request (axios will automatically include the token)
+  const response = await axios.post('https://order-processing-system-x02o.onrender.com/api/orders', {
+    customerId: 1,
+    items: [
+      {
+        itemId: 1,
+        quantity: 2
+      }
+    ]
+  });
+  
+  return response.data;
+}
 ```
+
+### Security Notes
+- CSRF tokens expire after 1 hour
+- Each session gets a unique token
+- Tokens are required for all modifying operations
+- GET requests don't require tokens
+- Include both cookie and header for token
+- Use HTTPS for all requests
 
 ## 🔍 API Endpoints
-
-### Customer Management
-- GET `/api/customers` - List all customers
-- GET `/api/customers/{id}` - Get customer by ID
-- POST `/api/customers` - Create new customer
-
-### Item Management
-
-#### 1. List All Items
-```http
-GET /api/items
-```
-**Response:**
-```json
-[
-  {
-    "id": 1,
-    "name": "Smartphone",
-    "price": 699.99,
-    "description": "Latest model smartphone"
-  },
-  {
-    "id": 2,
-    "name": "Laptop",
-    "price": 1299.99,
-    "description": "High-performance laptop"
-  }
-]
-```
-
-#### 2. Get Item by ID
-```http
-GET /api/items/{id}
-```
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "Smartphone",
-  "price": 699.99,
-  "description": "Latest model smartphone"
-}
-```
-
-#### 3. Create Single Item
-```http
-POST /api/items
-```
-**Request Body:**
-```json
-{
-  "name": "Smartphone",
-  "price": 699.99,
-  "description": "Latest model smartphone"
-}
-```
-**Response:** Returns created item with status code 201
-
-#### 4. Create Multiple Items
-```http
-POST /api/items/batch
-```
-**Request Body:**
-```json
-[
-  {
-    "name": "Smartphone",
-    "price": 699.99,
-    "description": "Latest model smartphone"
-  },
-  {
-    "name": "Laptop",
-    "price": 1299.99,
-    "description": "High-performance laptop"
-  }
-]
-```
-**Response:** Returns list of created items with status code 201
-
-#### 5. Delete Item
-```http
-DELETE /api/items/{id}
-```
-**Response:** Status code 204 (No Content)
-
-#### 6. Delete Multiple Items
-```http
-DELETE /api/items/batch
-```
-**Request Body:**
-```json
-[1, 2, 3]
-```
-**Response:** Status code 204 (No Content)
 
 ### Order Management
 
 #### 1. Create Order
 ```http
 POST /api/orders
-```
-**Request Body:**
-```json
+Content-Type: application/json
+X-XSRF-TOKEN: your-csrf-token
+
 {
   "customerId": 1,
   "items": [
     {
       "itemId": 1,
       "quantity": 2
-    },
-    {
-      "itemId": 2,
-      "quantity": 1
     }
   ]
 }
 ```
-**Response:**
+**Response:** `200 OK`
 ```json
 {
   "id": "uuid",
@@ -632,3 +551,32 @@ This project is licensed under the MIT License - see the LICENSE.md file for det
 3. Commit your Changes
 4. Push to the Branch
 5. Open a Pull Request
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+#### 403 Forbidden
+- Ensure CSRF token is included in both cookie and header
+- Token might be expired (get a new one)
+- Check if token is being sent correctly
+
+#### Token Not Received
+- Ensure cookies are enabled
+- Try clearing existing cookies
+- Make a fresh GET request to receive new token
+
+#### Request Failed
+1. Check token presence:
+   ```bash
+   # View cookie content
+   cat cookie.txt
+   ```
+2. Verify token in headers:
+   ```bash
+   curl -v -H "X-XSRF-TOKEN: $TOKEN" ...
+   ```
+3. Ensure cookie is included:
+   ```bash
+   curl -b cookie.txt ...
+   ```
