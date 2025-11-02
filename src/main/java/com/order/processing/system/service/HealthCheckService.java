@@ -11,6 +11,10 @@ import java.sql.Connection;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * Service class implementing Spring Boot's HealthIndicator to provide custom health checks.
+ * Monitors database connectivity and provides detailed health information.
+ */
 @Slf4j
 @Component("healthCheck")
 @RequiredArgsConstructor
@@ -19,6 +23,12 @@ public class HealthCheckService implements HealthIndicator {
     private final DataSource dataSource;
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
+    /**
+     * Performs health check and returns the current health status.
+     * Checks database connectivity and provides detailed health information.
+     *
+     * @return Health object containing status and details
+     */
     @Override
     public Health health() {
         try {
@@ -37,6 +47,11 @@ public class HealthCheckService implements HealthIndicator {
         }
     }
 
+    /**
+     * Tests database connectivity by attempting to establish a connection.
+     *
+     * @throws Exception if database connection fails
+     */
     private void checkDatabaseConnection() throws Exception {
         try (Connection conn = dataSource.getConnection()) {
             if (!conn.isValid(3)) { // 3 seconds timeout
@@ -45,6 +60,11 @@ public class HealthCheckService implements HealthIndicator {
         }
     }
 
+    /**
+     * Returns a formatted health status string for logging purposes.
+     *
+     * @return String containing current health status and timestamp
+     */
     public String getHealthStatus() {
         Health health = health();
         return String.format("Application Status: %s, Timestamp: %s",

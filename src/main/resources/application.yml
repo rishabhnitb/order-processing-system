@@ -67,10 +67,12 @@ management:
       probes:
         enabled: true
       group:
-        liveness:
-          include: ping,diskSpace
         readiness:
-          include: db,diskSpace
+          include: db,diskSpace,readinessState
+          show-details: always
+        liveness:
+          include: db,diskSpace,livenessState
+          show-details: always
   endpoints:
     web:
       exposure:
@@ -81,8 +83,9 @@ management:
       enabled: true
     db:
       enabled: true
-  info:
-    env:
+    livenessstate:
+      enabled: true
+    readinessstate:
       enabled: true
 
 # Health Check Configuration
