@@ -250,7 +250,6 @@ async function makeRequest() {
 ```http
 POST /api/orders
 Content-Type: application/json
-X-XSRF-TOKEN: your-csrf-token
 
 {
   "customerId": 1,
@@ -258,10 +257,34 @@ X-XSRF-TOKEN: your-csrf-token
     {
       "itemId": 1,
       "quantity": 2
+    },
+    {
+      "itemId": 2,
+      "quantity": 1
     }
   ]
 }
 ```
+
+Example using curl:
+```bash
+curl -X POST 'https://order-processing-system-x02o.onrender.com/api/orders' \
+-H "Content-Type: application/json" \
+-d '{
+  "customerId": 1,
+  "items": [
+    {
+      "itemId": 1,
+      "quantity": 2
+    },
+    {
+      "itemId": 2,
+      "quantity": 1
+    }
+  ]
+}'
+```
+
 **Response:** `200 OK`
 ```json
 {
@@ -291,100 +314,62 @@ X-XSRF-TOKEN: your-csrf-token
 ```http
 GET /api/orders/{id}
 ```
-**Response:**
-```json
-{
-  "id": "uuid",
-  "status": "PENDING",
-  "customer": {
-    "id": 1,
-    "name": "John Doe",
-    "email": "john@example.com"
-  },
-  "items": [
-    {
-      "itemId": 1,
-      "itemName": "Smartphone",
-      "itemPrice": 699.99,
-      "quantity": 2,
-      "subtotal": 1399.98
-    }
-  ],
-  "totalAmount": 1399.98,
-  "createdAt": "2025-11-02T10:00:00",
-  "updatedAt": "2025-11-02T10:00:00"
-}
+
+Example using curl:
+```bash
+curl https://order-processing-system-x02o.onrender.com/api/orders/{id}
 ```
 
 #### 3. List All Orders
 ```http
 GET /api/orders?status=PENDING
 ```
-Query Parameters:
-- `status` (optional): Filter by order status
 
-**Response:**
-```json
-[
-  {
-    "id": "uuid",
-    "status": "PENDING",
-    "customer": {
-      "id": 1,
-      "name": "John Doe",
-      "email": "john@example.com"
-    },
-    "items": [...],
-    "totalAmount": 1399.98,
-    "createdAt": "2025-11-02T10:00:00",
-    "updatedAt": "2025-11-02T10:00:00"
-  }
-]
+Example using curl:
+```bash
+# Get all orders
+curl https://order-processing-system-x02o.onrender.com/api/orders
+
+# Get orders with specific status
+curl https://order-processing-system-x02o.onrender.com/api/orders?status=PENDING
 ```
 
 #### 4. Cancel Order
 ```http
 PATCH /api/orders/{id}/cancel
 ```
-**Response:**
-```json
-{
-  "id": "uuid",
-  "status": "CANCELLED",
-  "customer": {
-    "id": 1,
-    "name": "John Doe",
-    "email": "john@example.com"
-  },
-  "items": [...],
-  "totalAmount": 1399.98,
-  "createdAt": "2025-11-02T10:00:00",
-  "updatedAt": "2025-11-02T10:00:00"
+
+Example using curl:
+```bash
+curl -X PATCH https://order-processing-system-x02o.onrender.com/api/orders/{id}/cancel
+```
+
+### Using with JavaScript/Axios
+```javascript
+const axios = require('axios');
+
+// Create new order
+async function createOrder() {
+  const response = await axios.post('https://order-processing-system-x02o.onrender.com/api/orders', {
+    customerId: 1,
+    items: [
+      {
+        itemId: 1,
+        quantity: 2
+      }
+    ]
+  });
+  return response.data;
+}
+
+// Get all orders
+async function getOrders() {
+  const response = await axios.get('https://order-processing-system-x02o.onrender.com/api/orders');
+  return response.data;
 }
 ```
 
-### 📊 Monitoring Endpoints
-
-```
-├── Health Check
-│   └── GET /actuator/health
-│
-├── Metrics
-│   └── GET /actuator/metrics
-│
-├── Environment Info
-│   └── GET /actuator/env
-│
-└── Logs
-    └── GET /actuator/loggers
-```
-
-## 📝 API Validations
-
-### Item Request Validation
-- `name`: Required, non-blank string
-- `price`: Required, positive number
-- `description`: Optional string
+## 🔍 API Validations
 
 ### Order Request Validation
 - `customerId`: Required, must reference an existing customer
@@ -556,27 +541,14 @@ This project is licensed under the MIT License - see the LICENSE.md file for det
 
 ### Common Issues
 
-#### 403 Forbidden
-- Ensure CSRF token is included in both cookie and header
-- Token might be expired (get a new one)
-- Check if token is being sent correctly
-
-#### Token Not Received
-- Ensure cookies are enabled
-- Try clearing existing cookies
-- Make a fresh GET request to receive new token
-
 #### Request Failed
-1. Check token presence:
-   ```bash
-   # View cookie content
-   cat cookie.txt
-   ```
-2. Verify token in headers:
-   ```bash
-   curl -v -H "X-XSRF-TOKEN: $TOKEN" ...
-   ```
-3. Ensure cookie is included:
-   ```bash
-   curl -b cookie.txt ...
-   ```
+- Check if the request body is properly formatted JSON
+- Verify the customer ID exists
+- Verify the item IDs exist
+- Check that quantities are positive numbers
+
+#### Server Response Codes
+- `200 OK`: Request successful
+- `400 Bad Request`: Invalid input data
+- `404 Not Found`: Resource not found (order/customer/item)
+- `500 Internal Server Error`: Server-side error
