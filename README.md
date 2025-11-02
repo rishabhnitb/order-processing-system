@@ -153,6 +153,78 @@ erDiagram
     ITEMS ||--o{ ORDER_ITEMS : included_in
 ```
 
+## 🔒 Security Implementation
+
+### CSRF Protection
+The API is secured with CSRF (Cross-Site Request Forgery) protection. For all POST, PUT, PATCH, and DELETE requests, you need to:
+
+1. First get the CSRF token from the cookie (XSRF-TOKEN)
+2. Include the token in the request header (X-XSRF-TOKEN)
+
+### Making API Calls
+
+#### GET Requests
+GET requests don't require CSRF tokens:
+```http
+GET /api/orders
+```
+
+#### POST/PUT/PATCH/DELETE Requests
+For modifying requests, include the CSRF token:
+
+```http
+// 1. First get the CSRF token cookie
+GET /api/any-endpoint
+// The response will include a cookie named XSRF-TOKEN
+
+// 2. Include the token in subsequent requests
+POST /api/orders
+Headers:
+  Content-Type: application/json
+  X-XSRF-TOKEN: your-csrf-token-here
+Body:
+{
+  "customerId": 1,
+  "items": [
+    {
+      "itemId": 1,
+      "quantity": 2
+    }
+  ]
+}
+```
+
+### Example using cURL
+```bash
+# 1. Get the CSRF token
+curl -c cookie.txt http://localhost:8080/api/orders
+
+# 2. Make a POST request with the token
+curl -X POST http://localhost:8080/api/orders \
+  -H "Content-Type: application/json" \
+  -H "X-XSRF-TOKEN: $(grep XSRF-TOKEN cookie.txt | cut -f 7)" \
+  -b cookie.txt \
+  -d '{"customerId":1,"items":[{"itemId":1,"quantity":2}]}'
+```
+
+### Example using JavaScript/Axios
+```javascript
+// Configure axios to include credentials and handle CSRF
+axios.defaults.withCredentials = true;
+
+// First request will receive the CSRF token cookie
+await axios.get('/api/orders');
+
+// Subsequent requests will automatically include the CSRF token
+await axios.post('/api/orders', {
+  customerId: 1,
+  items: [{
+    itemId: 1,
+    quantity: 2
+  }]
+});
+```
+
 ## 🔍 API Endpoints
 
 ### Customer Management
