@@ -23,12 +23,14 @@ public record Order(
         OrderStatus status,
         BigDecimal totalAmount,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        String reservationId   // set after inventory reservation; needed to release stock on cancel
 ) {
 
     /**
      * Factory method — creates a brand-new PENDING order.
      * Calculates totalAmount from items so callers never pass it in directly.
+     * reservationId is null until inventory confirms the reservation.
      */
     public static Order create(String customerId, List<OrderItem> items) {
         BigDecimal total = items.stream()
@@ -43,15 +45,22 @@ public record Order(
                 OrderStatus.PENDING,
                 total,
                 now,
-                now
+                now,
+                null
         );
+    }
+
+    /** Returns a copy of this order with the reservation ID attached. Called after Saga step 1. */
+    public Order withReservationId(String newReservationId) {
+        return new Order(id, customerId, items, status, totalAmount, createdAt, updatedAt, newReservationId);
     }
 
     /**
      * Returns a copy of this order with a new status and updated updatedAt timestamp.
+     * Carries the reservationId through so cancel can still release stock.
      * Used by the repository's atomic transition method.
      */
     public Order withStatus(OrderStatus newStatus) {
-        return new Order(id, customerId, items, newStatus, totalAmount, createdAt, Instant.now());
+        return new Order(id, customerId, items, newStatus, totalAmount, createdAt, Instant.now(), reservationId);
     }
 }

@@ -66,13 +66,15 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // ── Saga Step 2: persist the order ────────────────────────────────
+        // Attach reservationId so cancelOrder() can release stock later
+        Order orderWithReservation = order.withReservationId(reservationId);
         try {
-            Order saved = orderRepository.save(order);
+            Order saved = orderRepository.save(orderWithReservation);
             log.info("Order created: id={}, customer={}, total={}", saved.id(), saved.customerId(), saved.totalAmount());
             return saved;
         } catch (Exception ex) {
             // Compensation: order save failed, so release the stock we just reserved
-            log.error("Order save failed for orderId={} — releasing reservation={}", order.id(), reservationId);
+            log.error("Order save failed for orderId={} — releasing reservation={}", orderWithReservation.id(), reservationId);
             try {
                 inventoryClient.releaseStock(reservationId);
             } catch (Exception compensationEx) {
@@ -118,7 +120,21 @@ public class OrderServiceImpl implements OrderService {
             throw new InvalidStatusTransitionException(current.status(), OrderStatus.CANCELLED);
         }
 
-        return orderRepository.transition(id, current.status(), OrderStatus.CANCELLED)
+        Order cancelled = orderRepository.transition(id, current.status(), OrderStatus.CANCELLED)
                 .orElseThrow(() -> new InvalidStatusTransitionException(current.status(), OrderStatus.CANCELLED));
+
+        // Release the inventory reservation so stock becomes available again
+        if (current.reservationId() != null) {
+            try {
+                inventoryClient.releaseStock(current.reservationId());
+                log.info("Stock released: reservationId={} for cancelled orderId={}", current.reservationId(), id);
+            } catch (Exception ex) {
+                // Log but do not roll back the cancellation — order is already cancelled
+                log.error("Failed to release stock for reservationId={} on orderId={}: {}",
+                        current.reservationId(), id, ex.getMessage());
+            }
+        }
+
+        return cancelled;
     }
 }
