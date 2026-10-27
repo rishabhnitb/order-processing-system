@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -99,6 +100,9 @@ class OrderIntegrationTest {
 
         assertThat(cancelResp.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(cancelResp.getBody().status()).isEqualTo(OrderStatus.CANCELLED);
+
+        // Compensating transaction must have fired — stock released back to inventory
+        verify(inventoryClient).releaseStock("res-test-123");
 
         // ── Try to cancel again — must fail with 409 ─────────────────────
         ResponseEntity<Object> doubleCancel =
