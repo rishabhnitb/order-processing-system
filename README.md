@@ -13,10 +13,24 @@ A monorepo containing two microservices built with **Java 21** and **Spring Boot
 
 ---
 
-## Quick start — run both services locally
+## Option 1 — Docker (recommended)
+
+> Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/) to be installed and running.
 
 ```bash
 docker-compose up --build
+```
+
+This builds both images locally from source and starts the containers. On subsequent runs (no source changes) drop `--build` to reuse cached images:
+
+```bash
+docker-compose up
+```
+
+To stop and clean up:
+
+```bash
+docker-compose down
 ```
 
 | URL | Description |
@@ -26,12 +40,12 @@ docker-compose up --build
 | http://localhost:8080/actuator/health | Order Service health |
 | http://localhost:8081/actuator/health | Inventory Service health |
 
-> The scheduler is set to 10 seconds in docker-compose for demo purposes.
-> Create a PENDING order and watch it move to PROCESSING automatically.
+> The scheduler is set to **10 seconds** in `docker-compose.yml` for demo purposes (default in production is 5 minutes).
+> Place a PENDING order and watch it automatically move to PROCESSING within 10 seconds.
 
 ---
 
-## Without Docker (Maven)
+## Option 2 — Maven (no Docker needed)
 
 ```bash
 # Terminal 1 — inventory must start first
