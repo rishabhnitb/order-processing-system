@@ -1,0 +1,34 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: order-service
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false   # Instant → ISO-8601 string in JSON
+
+# inventory-service URL — overridden by INVENTORY_SERVICE_URL env var in Docker Compose
+inventory:
+  service:
+    url: ${INVENTORY_SERVICE_URL:http://localhost:8081}
+
+# Scheduler interval — overridden by SCHEDULER_INTERVAL_MS for demo/testing
+orders:
+  scheduler:
+    interval-ms: ${SCHEDULER_INTERVAL_MS:300000}   # default: 5 minutes
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
