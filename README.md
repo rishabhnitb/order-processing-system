@@ -1,6 +1,6 @@
 # Order Processing System
 
-A monorepo containing two microservices built with **Java 17** and **Spring Boot 3.2**.
+A monorepo containing two microservices built with **Java 21** and **Spring Boot 3.2**.
 
 ---
 
