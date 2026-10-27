@@ -5,7 +5,10 @@ FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /build
 # Parent POM first so Maven can resolve the child module
 COPY pom.xml ./pom.xml
+# Both module pom.xml files needed so the parent can discover all sibling modules
 COPY order-service/pom.xml ./order-service/pom.xml
+COPY inventory-service/pom.xml ./inventory-service/pom.xml
+# Only this service's sources
 COPY order-service/src ./order-service/src
 RUN --mount=type=cache,target=/root/.m2 \
     apk add --no-cache maven && \
