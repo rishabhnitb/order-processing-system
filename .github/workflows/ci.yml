@@ -38,7 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -65,7 +65,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -98,7 +98,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -117,18 +117,20 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push order-service image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
-          context: ./order-service
+          context: .
+          file: ./order-service/Dockerfile
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/order-service:${{ github.sha }}
             ghcr.io/${{ github.repository_owner }}/order-service:latest
 
       - name: Build and push inventory-service image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
-          context: ./inventory-service
+          context: .
+          file: ./inventory-service/Dockerfile
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/inventory-service:${{ github.sha }}
